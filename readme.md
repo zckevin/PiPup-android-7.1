@@ -1,3 +1,9 @@
+# PiPup Fork
+
+- works on Android 7.1
+- add CORS support
+- has a debug build apk
+
 # PiPup
 
 PiPup is an application that allows displaying user-defined custom notifications on Android TV.

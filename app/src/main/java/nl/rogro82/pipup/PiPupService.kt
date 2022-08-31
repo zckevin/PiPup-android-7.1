@@ -18,6 +18,10 @@ import android.widget.FrameLayout
 import fi.iki.elonen.NanoHTTPD
 import fi.iki.elonen.NanoHTTPD.newFixedLengthResponse
 import java.io.File
+import fi.iki.elonen.NanoHTTPD.Response
+
+
+
 
 
 class PiPupService : Service(), WebServer.Handler {
@@ -121,7 +125,8 @@ class PiPupService : Service(), WebServer.Handler {
 
                     val layoutFlags: Int = when {
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                        else -> WindowManager.LayoutParams.TYPE_TOAST
+                        else -> WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
+                        // else -> WindowManager.LayoutParams.TYPE_TOAST
                     }
 
                     val params = WindowManager.LayoutParams(
@@ -172,6 +177,10 @@ class PiPupService : Service(), WebServer.Handler {
     override fun handleHttpRequest(session: NanoHTTPD.IHTTPSession?): NanoHTTPD.Response {
         return session?.let {
             when(session.method) {
+                NanoHTTPD.Method.OPTIONS -> {
+                    Cors()
+                }
+
                 NanoHTTPD.Method.POST -> {
 
                     when(session.uri) {
@@ -288,7 +297,29 @@ class PiPupService : Service(), WebServer.Handler {
         const val MULTIPART_FORM_DATA = "multipart/form-data"
         const val APPLICATION_JSON = "application/json"
 
-        fun OK(message: String? = null): NanoHTTPD.Response = newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", message)
-        fun InvalidRequest(message: String? = null): NanoHTTPD.Response = newFixedLengthResponse(NanoHTTPD.Response.Status.BAD_REQUEST, "text/plain", "invalid request: $message")
+        fun cors_wrap(resp: NanoHTTPD.Response): NanoHTTPD.Response {
+            resp.addHeader(
+                "Access-Control-Allow-Methods",
+                "GET, POST, PUT, OPTIONS"
+            )
+            resp.addHeader(
+                "Access-Control-Allow-Origin",
+                "*"
+            )
+            return resp
+        }
+
+        fun OK(message: String? = null): NanoHTTPD.Response {
+            val resp = newFixedLengthResponse(NanoHTTPD.Response.Status.OK, "text/plain", message)
+            return cors_wrap(resp)
+        }
+        fun InvalidRequest(message: String? = null): NanoHTTPD.Response {
+            val resp = newFixedLengthResponse(NanoHTTPD.Response.Status.BAD_REQUEST, "text/plain", "invalid request: $message")
+            return cors_wrap(resp)
+        }
+        fun Cors(): NanoHTTPD.Response  {
+            val resp: Response = newFixedLengthResponse("ok")
+            return cors_wrap(resp)
+        }
     }
 }
